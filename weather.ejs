@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.plot.ly/plotly-2.12.1.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <title>Weather</title>
+  </head>
+  <style>
+    body {
+      background-color: #1f2937;
+      font-family: consolas;
+    }
+    #padding1 {
+      padding-top: 10px;
+    }
+    #padding2 {
+      padding-top: 10px;
+    }
+    #padding3 {
+      padding-top: 10px;
+    }
+    #padding4 {
+      padding-top: 10px;
+    }
+    #padding5 {
+      padding-top: 10px;
+    }
+    #padding6 {
+      padding-top: 10px;
+    }
+    #padding7 {
+      padding-top: 10px;
+    }
+    #padding8 {
+      padding-top: 10px;
+    }
+    #padding9 {
+      padding-top: 10px;
+    }
+    #background {
+      background-color: #111827;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    #date {
+      color: #93c5fd;
+    }
+    #clock {
+      color: #93c5fd;
+    }
+    #predicted {
+      color: #93c5fd;
+    }
+    #measured {
+      color: #93c5fd;
+    }
+    #avgtoday {
+      color: #93c5fd;
+    }
+    #avgtodaydiv {
+      background: #111827;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    #avghour {
+      color: #93c5fd;
+    }
+    #avghourdiv {
+      background: #111827;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    #rainfalldiv {
+      background: #111827;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    #rainfall {
+      color: #93c5fd;
+    }
+    #min {
+      color: #93c5fd;
+    }
+    #max {
+      color: #93c5fd;
+    }
+    #mindiv {
+      background: #111827;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    #maxdiv {
+      background: #111827;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+  </style>
+  <body>
+    <div id="padding1"></div>
+
+    <div id="background">
+      <center><p id="date"></p></center>
+      <center><p id="clock" onload="currentTime()"></p></center>
+    </div>
+
+    <div id="padding2"></div>
+
+    <div id="map"></div>
+
+    <div>
+      <center><p id="predicted">Today's predicted weather</p></center>
+    </div>
+
+    <div id="predictedgraph"></div>
+
+    <div>
+      <center><p id="measured">Today's measured weather</p></center>
+    </div>
+
+    <div id="measuredgraph"></div>
+
+    <!-- <div id="myDiv2"></div> -->
+
+    <!-- <div id="padding3"></div> -->
+
+    <!-- <div id="avgweekdiv"> -->
+    <!-- <center><p id="avgweek"></p></center> -->
+    <!-- </div> -->
+
+    <div id="padding4"></div>
+
+    <div id="avgtodaydiv">
+      <center><p id="avgtoday"></p></center>
+    </div>
+
+    <div id="padding5"></div>
+
+    <div id="avghourdiv">
+      <center><p id="avghour"></p></center>
+    </div>
+
+    <div id="padding6"></div>
+
+    <div id="mindiv">
+      <center><p id="min">Minimum temperature: 9 &deg;C</p></center>
+    </div>
+
+    <div id="padding7"></div>
+
+    <div id="maxdiv">
+      <center><p id="max">Maximum temperature: 14 &deg;C</p></center>
+    </div>
+
+    <div id="padding8"></div>
+
+    <div id="rainfalldiv">
+      <center><p id="rainfall">Rainfall Today: 0 mm</p></center>
+    </div>
+
+    <script>
+      let date = new Date();
+      let year = date.getFullYear();
+      let month = date.getMonth();
+      let day = date.getDate();
+      let day_of_week = date.getDay();
+
+      const day_names = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+
+      const month_names = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
+      let day_word = day_names[day_of_week];
+      let month_word = month_names[month];
+
+      let final_date = `${day_word} ${day} ${month_word} ${year}`;
+
+      document.getElementById("date").innerText = final_date;
+
+      function currentTime() {
+        let date = new Date();
+        let hh = date.getHours();
+        let mm = date.getMinutes();
+        let ss = date.getSeconds();
+
+        hh = hh < 10 ? "0" + hh : hh;
+        mm = mm < 10 ? "0" + mm : mm;
+        ss = ss < 10 ? "0" + ss : ss;
+
+        let time = hh + ":" + mm + ":" + ss;
+
+        document.getElementById("clock").innerText = time;
+        let t = setTimeout(function () {
+          currentTime();
+        }, 1000);
+      }
+      currentTime();
+      async function getData() {
+        let response = await fetch("http://129.151.168.7/weather");
+        let data = await response.json();
+
+        let time1 = [];
+        let time2 = [];
+        let time3 = [];
+        let temp1 = [];
+        let temp2 = [];
+        let temp3 = [];
+
+        let average_today = 0;
+        let count_today = 0;
+
+        let average_hour = 0;
+        let count_hour = 0;
+
+        let total = Object.keys(data).length;
+
+        for (let i = total - 600; i < total; i += 15) {
+          let timetmp3 = Object.keys(data)[i];
+          if (timetmp3.length == 14) {
+            timetmp3 = timetmp3.substr(0, 13) + "0" + timetmp3.substr(13, 1);
+          }
+          time3.push(timetmp3);
+        }
+
+        for (let i = total - 600; i < total; i += 15) {
+          let temperature = Object.values(data)[i];
+          if (temperature > 40) {
+            temperature = temperature / 10;
+          }
+          temp3.push(temperature);
+        }
+
+        for (let i = total - 600; i < total; i++) {
+          let timetmp1 = Object.keys(data)[i];
+          if (timetmp1.length == 14) {
+            timetmp1 = timetmp1.substr(0, 13) + "0" + timetmp1.substr(13, 1);
+          }
+          time1.push(timetmp1);
+        }
+
+        for (let i = total - 600; i < total; i++) {
+          let temperature = Object.values(data)[i];
+          if (temperature > 40) {
+            temperature = temperature / 10;
+          }
+          temp1.push(temperature);
+          average_today = average_today + temperature;
+          count_today++;
+        }
+
+        average_today = average_today / count_today;
+
+        average_today = Math.round(average_today * 100) / 100;
+
+        document.getElementById(
+          "avgtoday"
+        ).innerText = `Average temperature today: ${average_today} \xB0C`;
+
+        for (let i = total - 60; i < total; i++) {
+          let timetmp2 = Object.keys(data)[i];
+          if (timetmp2.length == 14) {
+            timetmp2 = timetmp2.substr(0, 13) + "0" + timetmp2.substr(13, 1);
+          }
+          time2.push(timetmp2);
+        }
+
+        for (let i = total - 60; i < total; i++) {
+          let temperature = Object.values(data)[i];
+          if (temperature > 40) {
+            temperature = temperature / 10;
+          }
+          temp2.push(temperature);
+          average_hour = average_hour + temperature;
+          count_hour++;
+        }
+
+        average_hour = average_hour / count_hour;
+
+        average_hour = Math.round(average_hour * 100) / 100;
+
+        document.getElementById(
+          "avghour"
+        ).innerText = `Average temperature the past hour was: ${average_hour} \xB0C`;
+
+        d3.csv("http://localhost:5000/location.csv", function (err, rows) {
+          function unpack(rows, key) {
+            return rows.map(function (row) {
+              return row[key];
+            });
+          }
+
+          var data = [
+            {
+              type: "scattermapbox",
+              text: unpack(rows, "Globvalue"),
+              lon: unpack(rows, "Lon"),
+              lat: unpack(rows, "Lat"),
+              marker: { color: "blue", size: 10 },
+            },
+          ];
+
+          var layout = {
+            dragmode: "zoom",
+            mapbox: {
+              style: "open-street-map",
+              center: { lat: -34.0462, lon: 18.8236 },
+              zoom: 6,
+            },
+            margin: { r: 0, t: 0, b: 0, l: 0 },
+          };
+
+          Plotly.newPlot("map", data, layout);
+        });
+
+        var data1 = [
+          {
+            x: time3,
+            y: temp3,
+            type: "scatter",
+          },
+        ];
+
+        Plotly.newPlot("measuredgraph", data1);
+
+        var data2 = [
+          {
+            x: time2,
+            y: temp2,
+            type: "scatter",
+          },
+        ];
+
+        // Plotly.newPlot("myDiv2", data2);
+      }
+      getData();
+      async function createChart() {
+        let start = "https://api.open-meteo.com/v1/forecast?";
+        let latitude = "latitude=-34.04";
+        let longitude = "&longitude=18.82";
+        let end = "&hourly=temperature_2m";
+        const url = start + latitude + longitude + end;
+        const response = await fetch(url);
+        var data = await response.json();
+        let arr = [];
+        let time = [];
+        date.innerHTML = data.hourly.time[0].substring(0, 10);
+        for (let i = 0; i < 25; i++) {
+          arr.push(data.hourly.temperature_2m[i]);
+        }
+        for (let i = 0; i < 25; i++) {
+          time.push(data.hourly.time[i]);
+        }
+        var data = [
+          {
+            x: time,
+            y: arr,
+            type: "scatter",
+          },
+        ];
+
+        Plotly.newPlot("predictedgraph", data);
+      }
+      createChart();
+    </script>
+  </body>
+</html>
