@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.plot.ly/plotly-2.12.1.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <title>Weather</title>
+    <style>
+      body {
+        background-color: #1f2937;
+        font-family: consolas;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="header"></div>
+    <div id="map_div"></div>
+    <div id="measuredgraph"></div>
+    <div id="info"></div>
+    <script>
+      const day_names = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const month_names = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+
+      const style_background =
+        "background-color: #111827; padding-top: 10px; padding-bottom: 10px; margin-bottom: 10px;";
+
+      const style_text = "color: #93c5fd";
+
+      const date_and_time = document.createElement("date_and_time");
+      date_and_time.innerHTML = `
+      <div style="${style_background}">
+        <center><p id="date" style="${style_text}"></p></center>
+        <center><p id="clock" style="${style_text}" onload="currentTime()"></p></center>
+      </div>
+      `;
+
+      document.getElementById("header").appendChild(date_and_time);
+
+      function current_time() {
+        let date = new Date();
+        let year = date.getFullYear();
+        let month = date.getMonth();
+        let day = date.getDate();
+        let day_of_week = date.getDay();
+        let hours = date.getHours();
+        let minutes = date.getMinutes();
+        let seconds = date.getSeconds();
+
+        let day_word = day_names[day_of_week];
+        let month_word = month_names[month];
+        let final_date = `${day_word} ${day} ${month_word} ${year}`;
+
+        hours = hours < 10 ? "0" + hours : hours;
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        let final_time = `${hours}:${minutes}:${seconds}`;
+
+        document.getElementById("date").innerText = final_date;
+        document.getElementById("clock").innerText = final_time;
+        let t = setTimeout(function () {
+          current_time();
+        }, 1000);
+      }
+
+      current_time();
+
+      async function draw_map() {
+        d3.csv("http://localhost:5000/location.csv", function (err, rows) {
+          function unpack(rows, key) {
+            return rows.map(function (row) {
+              return row[key];
+            });
+          }
+          let map_data = [
+            {
+              type: "scattermapbox",
+              lon: unpack(rows, "lon"),
+              lat: unpack(rows, "lat"),
+              marker: { color: "blue", size: 10 },
+            },
+          ];
+
+          let map_layout = {
+            dragmode: "zoom",
+            mapbox: {
+              style: "open-street-map",
+              center: { lat: -30.5595, lon: 22.9375 },
+              zoom: 4,
+            },
+            margin: { r: 0, t: 0, b: 0, l: 0 },
+          };
+          Plotly.newPlot("map_div", map_data, map_layout);
+        });
+      }
+      draw_map();
+
+      async function get_data() {
+        let response = await fetch("http://129.151.168.7/weather");
+        let data = await response.json();
+
+        let time_day = [];
+        let time_hour = [];
+
+        let temp_day = [];
+        let temp_hour = [];
+
+        let average_today = 0;
+        let average_hour = 0;
+
+        let count_today = 0;
+        let count_hour = 0;
+
+        let total = Object.keys(data).length;
+      }
+      get_data();
+    </script>
+  </body>
+</html>
